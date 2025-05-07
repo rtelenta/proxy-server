@@ -1,20 +1,31 @@
 const express = require("express");
 const { createProxyMiddleware } = require("http-proxy-middleware");
 
-require("dotenv").config();
-
 const app = express();
 
-const apiProxy = createProxyMiddleware({
-  target: process.env.TARGET_API,
-  changeOrigin: true,
-  logger: console,
-  secure: false,
-});
+app.use(
+  "/",
+  createProxyMiddleware({
+    target: "http://localhost:5173",
+    changeOrigin: true,
+    ws: true,
+    pathFilter: (pathname) => !pathname.startsWith("/lia"),
+  })
+);
 
-app.use("/api", apiProxy);
+app.use(
+  "/lia",
+  createProxyMiddleware({
+    target: "http://localhost:3007/lia",
+    changeOrigin: true,
+    ws: true,
+    pathRewrite: {
+      "^/lia": "",
+    },
+  })
+);
 
-const PORT = process.env.PORT || 5006;
+const PORT = 8080;
 app.listen(PORT, () => {
-  console.log(`Proxy server is listening on http://localhost:${PORT}`);
+  console.log(`Proxy server is running on http://localhost:${PORT}`);
 });
